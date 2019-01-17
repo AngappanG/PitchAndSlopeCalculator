@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pitch and Slope Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="keywords" content="Registration / Login form Responsive Widget, Login forms,Flat Pricing tables,Flat Drop downs  Sign up Web forms, Login sign up Responsive web Forms," />
+<script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+<script type="text/javascript">
+	function checkForLogin() {
+		var loggedIn = document.forms["processImage"]["loggedIn"].value;
+		if(loggedIn == "No") {
+			window.alert("Please login to proceed further.");
+		return false;
+		}
+		var canvas = document.getElementById("paint");
+	    var base64Image = document.getElementById("imageString");
+	    base64Image.value = canvas.toDataURL();
+		return true;
+	}
+</script>
+<!-- Custom CSS -->
+{% load static %}
+<link href="{% static "css/style.css" %}" rel='stylesheet' type='text/css' />
+<!-- font CSS -->
+<link href="//fonts.googleapis.com/css?family=Signika:300,400,700" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Roboto+Condensed:400,700" rel="stylesheet">
+<!--font CSS-->
+{% load static %}
+<script src="{% static "js/jquery2.0.3.min.js" %}"></script>
+{% load static %}
+<script src="{% static "js/pixlr.js" %}"></script>
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+{% load static %}
+<script src="{% static 'js/script.js' %}"></script>
+</head>
+<body class="dashboard-page" onload="circle()">
+{% block content %} 
+{% endblock %}
+</body>
+</html>

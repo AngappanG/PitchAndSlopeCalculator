@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+		<div class="main-grid">
+			<div class="agile-grids">	
+				<!-- validation -->
+				<div class="grids">
+					<div class="progressbar-heading grids-heading">
+						<h2>Pitch and Slope Calculator</h2>
+						{% if message %}
+							<script type="text/javascript">
+								alert({{ message }});
+							</script>
+						{% endif %}
+						{% if request.session.userName %}
+	                		<a style="font-size:14px;font-weight:bold;color:blue;float:right;" href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a>
+        				{% endif %}
+					</div>
+					<div class="forms-grids">
+						<div class="forms3">
+						<div class="w3agile-validation w3ls-validation">
+							<div class="panel panel-widget agile-validation register-form">
+								<div class="validation-grids widget-shadow" data-example-id="basic-forms"> 
+									<div class="input-info">
+										<h3>Upload Image</h3>
+									</div>
+									<div class="form-body form-body-info">
+										<form data-toggle="validator" action="{% url 'uploadImage' %}" method="post" enctype="multipart/form-data">
+										 {% csrf_token %}
+											<div class="form-group valid-form">
+												<input type="text" class="form-control" id="id_description" name="description" placeholder="Enter the image description" required="">
+											</div>
+											<div class="form-group valid-form">
+												<input type="file" class="form-control" id="id_document" name="document" placeholder="upload image" required="">
+											</div>
+											<div class="form-group">
+												<center><button type="submit" class="btn btn-primary">Submit</button></center>
+											</div>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="clear"> </div>
+						</div>
+					</div>
+				</div>
+				<!-- //validation -->
+			</div>
+		</div>
+		<!-- footer -->
+		<!-- <div class="footer">
+			<p>2018 Pitch And Slope Calculator. All Rights Reserved .</p>
+		</div> -->
+		<!-- //footer -->
+		<!-- input-forms -->
+		
+		{% load static %}
+		<script type="text/javascript" src="{% static "js/valida.2.1.6.min.js" %}"></script>
+		<script type="text/javascript" >
+
+			$(document).ready(function() {
+
+				// show Valida's version.
+				$('#version').valida( 'version' );
+
+				// Exemple 1
+				$('.valida').valida();
+
+        // setup the partial validation
+				$('#partial-1').on('click', function( ev ) {
+					ev.preventDefault();
+					$('#res-1').click(); // clear form error msgs
+					$('form').valida('partial', '#field-1'); // validate only field-1
+					$('form').valida('partial', '#field-1-3'); // validate only field-1-3
+				});
+
+			});
+
+		</script>
+		<!-- //input-forms -->
+		<!--validator js-->
+		{% load static %}
+		<script src="{% static "js/validator.min.js" %}"></script>
+		<!--//validator js-->
+{% endblock %}

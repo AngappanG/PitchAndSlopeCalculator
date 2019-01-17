@@ -1,0 +1,75 @@
+{% extends 'base.html' %} 
+{% block content %}
+<div class="main-grid">
+	<div class="agile-grids">
+		<!-- validation -->
+		<div class="grids">
+			<div class="progressbar-heading grids-heading">
+				<h2>Pitch and Slope Calculator</h2>
+				{% if request.session.loggedIn == 'Yes' %}
+                	<a style="font-size:14px;font-weight:bold;color:blue;float:right;" href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a>
+        		{% endif %}
+			</div>
+			<div class="forms-grids">
+				<div class="forms3">
+					<div class="w3agile-validation w3ls-validation">
+						<div class="panel panel-widget agile-validation register-form">
+							<div class="validation-grids widget-shadow"
+								data-example-id="basic-forms">
+								<div class="form-body form-body-info">
+										<form data-toggle="validator"  name="processImage" action="{% url 'processImage' %}" method="post"
+											enctype="multipart/form-data">
+											{% if request.session.uploadedFile %}
+												<input type="hidden" name="uploadedUrl" id="id_uploadedFile" value="{{ request.session.uploadedFile }}">
+											{% endif %}
+											<input type="hidden" id="imageString"/>
+											{% csrf_token %} 
+											{% if request.session.loggedIn %} 
+											<input type="hidden" name="loggedIn" id="id_loggedIn" value="{{ request.session.loggedIn }}">
+											{% else %}	
+												<input type="hidden" name="loggedIn" id="id_loggedIn" value="No">
+											{% endif %}
+											
+											<div class="form-group valid-form">
+											<table>
+												<tr>
+													<td rowspan="2">{% if request.session.uploadedFile %}
+														<img src="{{ request.session.uploadedFile }}"
+														alt="{{ request.session.uploadedFile }}"></img> 
+														{% endif %}
+													</td>
+													<td rowspan="2" align="center" valign="middle" style="padding:10px"><img src="{{ request.session.slopeFile }}"
+														alt="{{ request.session.slopeFile }}"></img></td>
+												</tr>
+												<tr>
+												<td/><td/>
+												</tr>
+											</table>
+										</div>
+											<center>
+												<div class="form-group" style="font-size:16;color:white;">
+													<p>
+														<a href="{% url 'userHome' %}">Return to home</a>
+														{% if not request.session.loggedIn %}
+															<a href="{% url 'signup' %}">SignUp|Login</a>
+														{% endif %}
+														{% if request.session.loggedIn == "No" %}
+															<a href="{% url 'signup' %}">SignUp|Login</a>
+														{% endif %}
+														{% if request.session.pdfFile %}
+															<a href="{{ request.session.pdfFile }}" target="_blank">Download</a>
+														{% endif %}
+													</p>
+												</div>
+											</center>
+										</form>
+									</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
