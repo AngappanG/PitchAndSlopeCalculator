@@ -1,12 +1,35 @@
 {% extends "base.html" %}
  {% block content %}
+<table border="1" class="headerTable">
+	<tr>
+		<td width="100%">
+			<div class="progressbar-heading grids-heading header">
+				{% load static %}
+				<img alt="logo"
+				src="{% static 'images/2byteslogo.JPG' %}">
+				<h2>Pitch and Slope Calculator</h2>
+				{% if message %}
+				<script type="text/javascript">
+					alert({{ message }});
+				</script>
+				{% endif %} 
+				{% if request.session.userName %} 
+				<!-- <a href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a><u>(<a style="" href="{% url 'logout' %}">logout</a>)</u> -->
+				<p style="font-size: 14px;font-weight: bold;color: blue;float: right;margin-top:30px;font-weight: bold;text-align:center;">
+					<a href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a><u>(<a style="" href="{% url 'logout' %}">logout</a>)</u>
+				</p> 
+				{% endif %}
+			</div>
+		</td>
+	</tr>
+</table>
 <div class="main-grid">
 			<div class="agile-grids">	
 				<!-- validation -->
 				<div class="grids">
-					<div class="progressbar-heading grids-heading">
+					<!-- <div class="progressbar-heading grids-heading">
 						<h2>Pitch and Slope Calculator</h2>
-					</div>
+					</div> -->
 					{% if message %}
           			  <ul>
                 		<li style="font-size:14px;color:{{ color }};font-weight:bold;">{{ message }}</li>
@@ -41,9 +64,10 @@
 											<div class="form-group has-feedback">
 												<input type="email" class="form-control" id="id_email" name="email" placeholder="Email" data-error="That email address is invalid" required />
 												<span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-												<span class="help-block with-errors">Please enter a valid email address</span>
+												<span class="help-block with-errors"></span>
 												{{ form.errors.email }}
 											</div>
+											
 											<div class="form-group">
 											  <input type="password" data-toggle="validator" data-minlength="6" class="form-control" id="id_password" name="password" placeholder="Password" required />
 											  <span class="help-block">Minimum of 6 characters</span>

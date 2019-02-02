@@ -24,16 +24,39 @@ $(document).ready(function() {
 	  });
 	});
 </script>
+<table border="1" class="headerTable">
+	<tr>
+		<td width="100%">
+			<div class="progressbar-heading grids-heading header">
+				{% load static %}
+				<img alt="logo"
+				src="{% static 'images/2byteslogo.JPG' %}">
+				<h2>Pitch and Slope Calculator</h2>
+				{% if message %}
+				<script type="text/javascript">
+					alert({{ message }});
+				</script>
+				{% endif %} 
+				{% if request.session.userName %} 
+				<!-- <a href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a><u>(<a style="" href="{% url 'logout' %}">logout</a>)</u> -->
+				<p style="font-size: 14px;font-weight: bold;color: blue;float: right;margin-top:30px;font-weight: bold;text-align:center;">
+					<a href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a><u>(<a style="" href="{% url 'logout' %}">logout</a>)</u>
+				</p> 
+				{% endif %}
+			</div>
+		</td>
+	</tr>
+</table>
 	<div class="main-grid">
 		<div class="agile-grids">
 			<!-- validation -->
 			<div class="grids">
-				<div class="progressbar-heading grids-heading">
+			<!-- 	<div class="progressbar-heading grids-heading">
 					<h2>Pitch and Slope Calculator</h2>
 					{% if request.session.loggedIn == 'Yes' %}
                 			<a style="font-size:14px;font-weight:bold;color:blue;float:right;" href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a>
         			{% endif %}
-				</div>
+				</div> -->
 
 				<div class="forms-grids">
 					<div class="forms3">
@@ -67,25 +90,20 @@ $(document).ready(function() {
 													src="{{ request.session.uploadedFile }}" alt="{{ request.session.uploadedFile }}"></img>
 												{% endif %}
 											</div> -->
-												<div class="form-group" style="font-size:16;color:white;">
+												<br>
+												<div class="form-group">
 													<p>
-														<a href="{% url 'userHome' %}">Return to home</a>
+														<a class="link-group" href="{% url 'userHome' %}">Return to Home    </a>
 														{% if not request.session.loggedIn %}
-															<a href="{% url 'signup' %}">SignUp|Login</a>
+															<a class="link-group" href="{% url 'signup' %}">SignUp|Login</a>
 														{% endif %}
 														{% if request.session.loggedIn == "No" %}
-															<a href="{% url 'signup' %}">SignUp|Login</a>
+															<a class="link-group" href="{% url 'signup' %}">SignUp|Login</a>
 														{% endif %}
 													</p>
 												</div>
 												<div class="form-group">
 													<button type="submit" class="btn btn-primary">Calculate</button>
-												<!-- <table>
-													<tr>
-														<td style="padding-right:20px;"><button type="submit" class="btn btn-primary">Calculate</button></td>
-														<td><button type="button" class="btn btn-primary" id="saveImage" onclick="javascript:saveImageToServer()">Save</button></td>
-													</tr>
-												</table> -->
 												</div>
 											</center>
 										</form>

@@ -1,21 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
-		<div class="main-grid">
+<table border="1" class="headerTable">
+	<tr>
+		<td style="border:0px;">
+			<div class="progressbar-heading grids-heading header">
+				{% load static %}
+				<img alt="logo"
+				src="{% static 'images/2byteslogo.JPG' %}">
+				<h2>Pitch and Slope Calculator</h2>
+				{% if message %}
+				<script type="text/javascript">
+					alert({{ message }});
+				</script>
+				{% endif %} 
+				{% if request.session.userName %} 
+				<p style="font-size: 14px;font-weight: bold;color: blue;float: right;margin-top:30px;font-weight: bold;text-align:center;">
+					<a href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a><u>(<a style="" href="{% url 'logout' %}">logout</a>)</u>
+				</p> 
+				{% endif %}
+			</div>
+		</td>
+	</tr>
+</table>
+<div class="main-grid">
 			<div class="agile-grids">	
 				<!-- validation -->
-				<div class="grids">
-					<div class="progressbar-heading grids-heading">
-						<h2>Pitch and Slope Calculator</h2>
-						{% if message %}
-							<script type="text/javascript">
-								alert({{ message }});
-							</script>
-						{% endif %}
-						{% if request.session.userName %}
-	                		<a style="font-size:14px;font-weight:bold;color:blue;float:right;" href="{% url 'viewImage' %}">Welcome {{ request.session.userName }}</a>
-        				{% endif %}
-					</div>
 					<div class="forms-grids">
+					<div class="grids">
 						<div class="forms3">
 						<div class="w3agile-validation w3ls-validation">
 							<div class="panel panel-widget agile-validation register-form">
