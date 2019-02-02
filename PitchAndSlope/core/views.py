@@ -10,6 +10,7 @@ import re
 import os
 import img2pdf 
 from PIL import Image 
+from django.core.exceptions import ValidationError
 
 def home(request):
     return render(request, 'core/home.html')
@@ -34,7 +35,7 @@ def uploadImage(request):
     if request.method == 'POST' and request.FILES['document']:
         myfile = request.FILES['document']
         fs = FileSystemStorage()
-        imageName = settings.MEDIA_ROOT+"\\"+myfile.name
+        imageName = settings.MEDIA_ROOT+"/"+myfile.name
         if os.path.exists(imageName):
             os.remove(imageName)
         filename = fs.save(myfile.name, myfile)
@@ -51,26 +52,54 @@ def processImage(request):
     loggedIn = request.POST.get('loggedIn')
     request.session["loggedIn"]=loggedIn
     image = request.POST.get('imageString')
-    dataUrlPattern = re.compile('data:image/(png|jpeg);base64,(.*)$')
-    image_data = dataUrlPattern.match(image).group(2)
-    image_data = image_data.encode()
-    image_data = base64.b64decode(image_data)
-    if 'userName' in request.session:
-        userName=request.session['userName']   
-    imageName = settings.MEDIA_ROOT+"\processedImage_"+userName+".png"
-    pdfFileName = settings.MEDIA_ROOT+"\PDF\processedImage_"+userName+".pdf"
-    if os.path.exists(imageName):
-        os.remove(imageName)
-    with open(imageName, "wb") as fh:
-        fh.write(image_data)
-        fh.close()
-    detectPoints(imageName)
-    saveAsPDF(imageName, pdfFileName)
-    request.session["uploadedFile"]="/media/processedImage_"+userName+".png"
-    request.session["slopeFile"]="/media/slopeAndPitch.png"
-    request.session["pdfFile"]="/media/PDF/processedImage_"+userName+".pdf"
+    if image :
+        dataUrlPattern = re.compile('data:image/(png|jpeg);base64,(.*)$')
+        image_data = dataUrlPattern.match(image).group(2)
+        image_data = image_data.encode()
+        image_data = base64.b64decode(image_data)
+        if 'userName' in request.session:
+            userName=request.session['userName']   
+        imageName = settings.MEDIA_ROOT+"/processedImage_"+userName+".png"
+        pdfImageName = settings.MEDIA_ROOT+"/processedImage_"+userName+"_PDF.png"
+        pdfFileName = settings.MEDIA_ROOT+"/PDF/processedImage_"+userName+".pdf"
+        if os.path.exists(imageName):
+            os.remove(imageName)
+        if os.path.exists(pdfImageName):
+            os.remove(pdfImageName)
+        with open(imageName, "wb") as fh:
+            fh.write(image_data)
+            fh.close()
+        if 'uploadedFile' in request.session:    
+            uploadedUrl=request.session["uploadedFile"]
+            if uploadedUrl:
+                request.session['uploadedFile']=uploadedUrl
+                request.session['processedFile']=uploadedUrl
+                request.session["slopeFile"]="/media/slopeAndPitch.png"
+        pointsPresent = detectPoints(imageName,pdfImageName,request)
+        if(pointsPresent == True):
+            saveAsPDF(pdfImageName, pdfFileName)
+            request.session["pdfFile"]="/media/PDF/processedImage_"+userName+".pdf"
+            request.session['processedFile']="/media/processedImage_"+userName+".png"
+        else:
+            if 'pdfFile' in request.session:
+                del request.session['pdfFile']
+            if 'RiseValue' in request.session:
+                del request.session["RiseValue"]
+            if 'RunValue' in request.session:
+                del request.session["RunValue"]
+            if 'SpanValue' in request.session:
+                del request.session["SpanValue"]
+            if 'SlopeValue' in request.session:
+                del request.session["SlopeValue"]
+            if 'PitchValue' in request.session:
+                del request.session["PitchValue"]
+            if 'result' in request.session:
+                del request.session["result"]
+            request.session.modified = True
+            render(request,'core/viewImage.html',{'message':'Please select the points','color':'red'})
+            
     return render(request, 'core/processedImage.html')
-
+        
 def viewImage(request):
     userName=request.session["userName"]
     if userName:
@@ -94,7 +123,10 @@ def signup(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            try:
+                form.save()
+            except ValidationError:
+                render(request, 'core/signup.html', {'form': form,'message':'Error in creating the user','color':'red'})
             uploadedUrl = request.POST.get('uploadedUrl')
             if uploadedUrl:
                 request.session["uploadedFile"]=uploadedUrl
@@ -132,12 +164,6 @@ def processLogin(request):
             return render(request, 'core/signup.html', {'message':'Invalid Username or password.','color':'red'})
     else:
         return render(request, 'core/signup.html')
-
-def logout(request):
-    if 'userName' in request.session:
-        userName=request.session['userName']
-    
-    return
     
 def saveImage(request):
     if request.method == 'GET':
@@ -150,17 +176,15 @@ def saveImage(request):
         request.session["uploadedFile"]=filename
         return viewImage(request)
 
-def detectPoints(imageName):
+def detectPoints(imageName,pdfImageName,request):
     img_rgb = cv2.imread(imageName)
     height, width = img_rgb.shape[:2]
-    #for i in range(0,img_rgb.shape[0]):
-        #for j in range(0,img_rgb.shape[1]):
-            #pixel = img_rgb.item(i, j)
-            #print(pixel
+    
     points = [[0,0],[0,0],[0,0]]
+    pointsPresent = False
     ptCnt = 0
-    xRange = 0;
-    yRange = 0;
+    xRange = 0
+    yRange = 0
     image_data = np.asarray(img_rgb)
     for i in range(len(image_data)):
         if(i > yRange):
@@ -173,7 +197,7 @@ def detectPoints(imageName):
                     for x in range(i,i+10):
                         for y in range(j,j+10):
                             if(image_data[x][y][0]==0 and image_data[x][y][1]== 0 and image_data[x][y][2]==255):
-                                count += 1; 
+                                count += 1
                             else:
                                 break
                     
@@ -194,6 +218,7 @@ def detectPoints(imageName):
                                 else:
                                     addPt = False
                             if(addPt == True):
+                                pointsPresent = True
                                 if(yPos == i):
                                     points[ptCnt] = [j+5,i+5]
                                 else:
@@ -203,74 +228,85 @@ def detectPoints(imageName):
                                 if(ptCnt==1):
                                     yRange = i+15
     points = tuple(points)
-    print(points)
-    x1 = points[0][0]
-    x2 = points[1][0]
-    x3 = points[2][0]
-    y1 = points[0][1]
-    y2 = points[1][1]
-    y3 = points[2][1]
-    minX = 0
-    maxX = 0
-    
-    minY = 0
-    maxY = 0
-    
-    if (x1 >= x2) and (x1 >= x3):
-        maxX = x1
-    elif (x2 >= x1) and (x2 >= x3):
-        maxX = x2
-    else:
-        maxX = x3
+    if(pointsPresent == True):
+        print(points)
+        x1 = points[0][0]
+        x2 = points[1][0]
+        x3 = points[2][0]
+        y1 = points[0][1]
+        y2 = points[1][1]
+        y3 = points[2][1]
+        minX = 0
+        maxX = 0
         
-    if (x1 <= x2) and (x1 <= x3):
-        minX = x1
-    elif (x2 <= x1) and (x2 <= x3):
-        minX = x2
-    else:
-        minX = x3
+        minY = 0
+        maxY = 0
         
-    riseX = minX +int((maxX-minX)/2)
+        if (x1 >= x2) and (x1 >= x3):
+            maxX = x1
+        elif (x2 >= x1) and (x2 >= x3):
+            maxX = x2
+        else:
+            maxX = x3
+            
+        if (x1 <= x2) and (x1 <= x3):
+            minX = x1
+        elif (x2 <= x1) and (x2 <= x3):
+            minX = x2
+        else:
+            minX = x3
+            
+        riseX = minX +int((maxX-minX)/2)
+            
+        if (y1 >= y2) and (y1 >= y3):
+            maxY = y1
+        elif (y2 >= y1) and (y2 >= y3):
+            maxY = y2
+        else:
+            maxY = y3
+            
+        if (y1 <= y2) and (y1 <= y3):
+            minY = y1
+        elif (y2 <= y1) and (y2 <= y3):
+            minY = y2
+        else:
+            minY = y3
         
-    if (y1 >= y2) and (y1 >= y3):
-        maxY = y1
-    elif (y2 >= y1) and (y2 >= y3):
-        maxY = y2
-    else:
-        maxY = y3
+        riseY = minY +int((maxY-minY)/2)
         
-    if (y1 <= y2) and (y1 <= y3):
-        minY = y1
-    elif (y2 <= y1) and (y2 <= y3):
-        minY = y2
-    else:
-        minY = y3
-    
-    riseY = minY +int((maxY-minY)/2)
-    
-    slope = (maxY-minY)/(riseX - minX)
-    #slopePt = (int(points[0][0]/2),int(points[1][1]/2))
-    print("Slope of the house")
-    print(slope)
-    pitch = slope/2
-    print("Pitch of the house")
-    print(pitch)
-    #i=0
-    #while i < len(points)-1:
-    #cv2.line(img_rgb, tuple(points[i]),tuple(points[i+1]), (0,255,255), 2)
-    #i = i+1
-    cv2.line(img_rgb, (minX,maxY),(riseX,minY), (0,255,255), 2)
-    cv2.line(img_rgb, (minX,maxY),(maxX,maxY), (0,255,255), 2)
-    
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.line(img_rgb, (riseX,minY),(riseX,maxY), (0,255,0), 2)
-    cv2.putText(img_rgb,'Rise='+str(int(maxY-minY)),(riseX+2,riseY+2), font, 0.5,(255,255,0),2,cv2.LINE_AA)
-    cv2.putText(img_rgb,'Run='+str(int((maxX-minX)/2)),(minX+5,maxY+20), font, 0.5,(255,255,0),2,cv2.LINE_AA)
-    cv2.putText(img_rgb,'Span='+str(int(maxX-minX)),(minX+int((maxX-minX)/2),maxY+35), font, 0.5,(255,255,0),2,cv2.LINE_AA)
-    cv2.putText(img_rgb,'Slope = (Rise/Run) = '+str("%.2f" % slope),(20,int((height/2)+30)), font, 0.5,(255,255,0),2,cv2.LINE_AA)
-    cv2.putText(img_rgb,'Pitch = (Rise/Span) = '+str("%.2f" % pitch),(20,int((height/2)+50)), font, 0.5,(255,255,0),2,cv2.LINE_AA)
-    cv2.imwrite(imageName,img_rgb)
-    return
+        slope = (maxY-minY)/(riseX - minX)
+        #slopePt = (int(points[0][0]/2),int(points[1][1]/2))
+        print("Slope of the house")
+        print(slope)
+        pitch = slope/2
+        print("Pitch of the house")
+        print(pitch)
+        #i=0
+        #while i < len(points)-1:
+        #cv2.line(img_rgb, tuple(points[i]),tuple(points[i+1]), (0,255,255), 2)
+        #i = i+1
+        cv2.line(img_rgb, (minX,maxY),(riseX,minY), (0,255,255), 2)
+        cv2.line(img_rgb, (minX,maxY),(maxX,maxY), (0,255,255), 2)
+        
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.line(img_rgb, (riseX,minY),(riseX,maxY), (0,255,0), 2)
+        cv2.imwrite(imageName,img_rgb)
+        
+        request.session["RiseValue"] = str(int(maxY-minY))
+        request.session["RunValue"] = str(int((maxX-minX)/2))
+        request.session["SpanValue"] = str(int(maxX-minX))
+        request.session["SlopeValue"] = str("%.2f" % slope)
+        request.session["PitchValue"] = str("%.2f" % pitch)
+        request.session["result"] = "Success"
+        
+        cv2.putText(img_rgb,'Rise='+str(int(maxY-minY)),(riseX+2,riseY+2), font, 0.5,(30,105,210),2,cv2.LINE_AA)
+        cv2.putText(img_rgb,'Run='+str(int((maxX-minX)/2)),(minX+5,maxY+20), font, 0.5,(30,105,210),2,cv2.LINE_AA)
+        cv2.putText(img_rgb,'Span='+str(int(maxX-minX)),(minX+int((maxX-minX)/2),maxY+35), font, 0.5,(30,105,210),2,cv2.LINE_AA)
+        cv2.putText(img_rgb,'Slope = (Rise/Run) = '+str("%.2f" % slope),(20,int((height/2)+30)), font, 0.5,(30,105,210),2,cv2.LINE_AA)
+        cv2.putText(img_rgb,'Pitch = (Rise/Span) = '+str("%.2f" % pitch),(20,int((height/2)+50)), font, 0.5,(30,105,210),2,cv2.LINE_AA)
+        cv2.imwrite(pdfImageName,img_rgb)
+        
+    return pointsPresent
     
 
 def saveAsPDF(imageName,pdfFileName):
@@ -289,3 +325,29 @@ def saveAsPDF(imageName,pdfFileName):
     # closing image file 
     image.close() 
       
+def logout(request):
+    if 'pdfFile' in request.session:
+        del request.session['pdfFile']
+    if 'uploadedFile' in request.session:
+        del request.session['uploadedFile']
+    if 'userName' in request.session:
+        del request.session['userName']
+    if 'processedFile' in request.session:
+        del request.session['processedFile']
+    if 'slopeFile' in request.session:
+        del request.session['slopeFile']
+    if 'RiseValue' in request.session:
+        del request.session["RiseValue"]
+    if 'RunValue' in request.session:
+        del request.session["RunValue"]
+    if 'SpanValue' in request.session:
+        del request.session["SpanValue"]
+    if 'SlopeValue' in request.session:
+        del request.session["SlopeValue"]
+    if 'PitchValue' in request.session:
+        del request.session["PitchValue"]
+    if 'result' in request.session:
+        del request.session["result"]
+    request.session["loggedIn"]="No"
+    request.session.modified = True
+    return render(request, 'core/home.html')
