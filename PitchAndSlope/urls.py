@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'^processLogin/$', coreviews.processLogin, name='processLogin'),
     url(r'^viewImage/$', coreviews.viewImage, name='viewImage'),
     url(r'^saveImage/$', coreviews.saveImage, name='saveImage'),
+    url(r'^logout/$', coreviews.logout, name='logout'),
 ]
 
 if settings.DEBUG:
